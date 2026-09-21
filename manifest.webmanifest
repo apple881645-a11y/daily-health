@@ -1,0 +1,9 @@
+{
+  "name": "日日健康",
+  "short_name": "日日健康",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f5f5f7",
+  "theme_color": "#f7f7f7",
+  "icons": []
+}

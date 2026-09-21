@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f7f7f7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="日日健康">
+<link rel="manifest" href="manifest.webmanifest">
+<title>日日健康</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f5f5f7;color:#171717;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","PingFang TC","Noto Sans TC",sans-serif}
+button,input,select,textarea{font:inherit}button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.app{max-width:720px;margin:auto;min-height:100vh;padding-bottom:92px}.top{padding:22px 20px 10px;display:flex;justify-content:space-between;align-items:center}
+.top h1{margin:0;font-size:28px}.date{color:#777;font-size:13px}.content{padding:10px 16px}
+.card{background:#fff;border-radius:22px;padding:18px;margin:12px 0;box-shadow:0 1px 3px #00000008}
+.hero{background:#111;color:#fff}.hero .muted{color:#bbb}.row{display:flex;justify-content:space-between;gap:12px;align-items:center}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.metric{background:#f6f6f7;border-radius:16px;padding:13px}.metric b{font-size:21px}.metric small{display:block;color:#777;margin-top:4px}
+.btn{border:0;border-radius:14px;padding:12px 15px;background:#ededee}.btn.primary{background:#111;color:#fff}.btn.full{width:100%}
+input,select,textarea{width:100%;border:1px solid #ddd;border-radius:12px;padding:11px;background:#fff;margin-top:6px}
+label{font-size:13px;color:#555}.title{font-weight:700;font-size:17px;margin-bottom:10px}.muted{color:#777;font-size:13px;line-height:1.55}
+.progress{height:9px;background:#e8e8ea;border-radius:99px;overflow:hidden}.progress i{display:block;height:100%;background:#111;border-radius:99px}
+.page{display:none}.page.active{display:block}.nav{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:min(720px,100%);height:76px;background:#fff;border-top:1px solid #ddd;display:grid;grid-template-columns:repeat(4,1fr);padding-bottom:env(safe-area-inset-bottom);z-index:50}
+.nav button{border:0;background:transparent;color:#777;font-size:12px}.nav button.active{color:#111;font-weight:700}.nav span{display:block;font-size:22px;margin-bottom:3px}
+.quick{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.quick button{border:0;background:#f0f0f2;border-radius:16px;padding:14px 5px;color:#222}
+.list{border-top:1px solid #eee}.item{padding:12px 0;border-bottom:1px solid #eee}.danger{background:#fff2f2;color:#a40000}
+#toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);background:#111;color:#fff;padding:10px 14px;border-radius:99px;font-size:13px;display:none;z-index:100}
+@media(min-width:600px){.content{padding:10px 22px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="top"><div><h1>日日健康</h1><div class="date" id="date"></div></div><button class="btn" onclick="show('more')">⚙️</button></header>
+
+<main class="content">
+<section id="today" class="page active">
+  <div class="card hero">
+    <div class="row"><div><div class="muted">今日熱量</div><b style="font-size:32px" id="todayKcal">0</b> kcal</div><div style="text-align:right"><div class="muted">目標</div><b id="target">—</b> kcal</div></div>
+    <div style="margin-top:15px" class="progress"><i id="kcalBar" style="width:0;background:#fff"></i></div>
+  </div>
+  <div class="card"><div class="title">今日狀態</div><div class="grid3">
+    <div class="metric"><b id="wVal">—</b><small>體重 kg</small></div>
+    <div class="metric"><b id="waterVal">0</b><small>喝水 ml</small></div>
+    <div class="metric"><b id="sleepVal">—</b><small>睡眠 小時</small></div>
+  </div></div>
+  <div class="card"><div class="title">快速紀錄</div><div class="quick">
+    <button onclick="show('record');setRecord('food')">🍱<br>飲食</button>
+    <button onclick="show('record');setRecord('water')">💧<br>喝水</button>
+    <button onclick="show('record');setRecord('weight')">⚖️<br>體重</button>
+    <button onclick="show('record');setRecord('sleep')">😴<br>睡眠</button>
+    <button onclick="show('record');setRecord('bowel')">🚽<br>排便</button>
+    <button onclick="show('record');setRecord('vitals')">❤️<br>血氧心率</button>
+  </div></div>
+  <div class="card"><div class="title">健康管理</div><div class="quick">
+    <button onclick="show('asthma')">🫁<br>哮喘</button>
+    <button onclick="show('goal')">🎯<br>減重目標</button>
+    <button onclick="show('fooddb')">🍱<br>食物庫</button>
+  </div></div>
+</section>
+
+<section id="weekly" class="page">
+  <div class="title">📊 週檢查</div><div class="card" id="weeklyCard"></div>
+  <div class="card"><div class="title">趨勢</div><div id="trend"></div></div>
+</section>
+
+<section id="doctor" class="page">
+  <div class="title">✦ AI 健康助手</div>
+  <div class="card"><div class="muted">輸入問題後，若已部署 AI Proxy，會將你授權的健康紀錄送給 AI 分析；未連線時只顯示本機資料摘要。</div>
+  <textarea id="question" rows="4" placeholder="例如：最近我的體重和飲食有什麼變化？"></textarea>
+  <button class="btn primary full" onclick="askAI()">分析我的紀錄</button></div>
+  <div class="card" id="aiOut"></div>
+</section>
+
+<section id="more" class="page">
+  <div class="title">更多</div>
+  <div class="card"><div class="title">個人化熱量目標</div><div class="grid2">
+    <label>身高 cm<input id="height" type="number"></label><label>年齡<input id="age" type="number"></label>
+    <label>性別<select id="sex"><option value="female">女性</option><option value="male">男性</option></select></label>
+    <label>活動量<select id="activity"><option value="1.2">久坐</option><option value="1.375">輕度</option><option value="1.55">中度</option><option value="1.725">高度</option></select></label>
+  </div><label>目標<select id="goalMode"><option value="loss">減重</option><option value="maintain">維持</option><option value="gain">增重</option></select></label>
+  <button class="btn primary full" style="margin-top:10px" onclick="saveSettings()">計算並儲存</button></div>
+  <div class="card"><div class="title">AI 設定</div><label>AI Proxy URL<input id="proxy" placeholder="https://你的網域/api/ai"></label><button class="btn full" style="margin-top:10px" onclick="saveProxy()">儲存</button></div>
+  <div class="card"><div class="title">資料</div><button class="btn danger full" onclick="clearAll()">清除本機資料</button></div>
+</section>
+
+<section id="record" class="page">
+  <div class="row"><div class="title">新增紀錄</div><button class="btn" onclick="show('today')">← 返回</button></div>
+  <div class="card">
+    <label>紀錄類型<select id="rtype" onchange="renderRecordForm()"><option value="food">飲食</option><option value="water">喝水</option><option value="weight">體重</option><option value="sleep">睡眠</option><option value="bowel">排便</option><option value="vitals">血氧／心率</option></select></label>
+    <div id="recordForm" style="margin-top:10px"></div>
+    <button class="btn primary full" style="margin-top:12px" onclick="saveRecord()">儲存</button>
+  </div>
+  <div class="card"><div class="title">最近紀錄</div><div class="list" id="recordList"></div></div>
+</section>
+
+<section id="asthma" class="page">
+  <div class="row"><div class="title">🫁 哮喘</div><button class="btn" onclick="show('today')">← 返回</button></div>
+  <div class="card"><label>狀態<select id="astStatus"><option>穩定</option><option>有症狀</option><option>明顯不舒服</option></select></label>
+  <div class="grid2" style="margin-top:10px"><label>喘 0–10<input id="astW" type="number" min="0" max="10" value="0"></label><label>咳嗽 0–10<input id="astC" type="number" min="0" max="10" value="0"></label><label>胸悶 0–10<input id="astT" type="number" min="0" max="10" value="0"></label><label>呼吸困難 0–10<input id="astD" type="number" min="0" max="10" value="0"></label></div>
+  <label style="display:block;margin-top:10px">誘因<select id="astTrigger"><option>不確定</option><option>冷空氣</option><option>灰塵</option><option>運動</option><option>感染／感冒</option><option>壓力</option></select></label>
+  <button class="btn primary full" style="margin-top:12px" onclick="saveAsthma()">儲存哮喘紀錄</button></div>
+  <div class="card danger"><b>安全提醒</b><p class="muted">嚴重或快速惡化的呼吸困難、無法完整說話、意識改變等危急情況，請依既有醫療計畫處理並立即就醫／呼叫緊急救援。</p></div>
+</section>
+
+<section id="goal" class="page">
+  <div class="row"><div class="title">🎯 減重目標</div><button class="btn" onclick="show('today')">← 返回</button></div>
+  <div class="card"><div class="grid2"><label>起始體重 kg<input id="gStart" type="number" step=".1"></label><label>目標體重 kg<input id="gTarget" type="number" step=".1"></label></div><label style="display:block;margin-top:10px">目標日期<input id="gDate" type="date"></label><button class="btn primary full" style="margin-top:12px" onclick="saveGoal()">儲存</button></div>
+  <div class="card" id="goalOut"></div>
+</section>
+
+<section id="fooddb" class="page">
+  <div class="row"><div class="title">🍱 食物資料庫</div><button class="btn" onclick="show('today')">← 返回</button></div>
+  <div class="card"><div class="grid2"><label>名稱<input id="fdName"></label><label>kcal<input id="fdKcal" type="number"></label></div><label style="display:block;margin-top:10px">分類<input id="fdCat"></label><button class="btn primary full" style="margin-top:12px" onclick="saveFoodDB()">加入</button></div>
+  <div class="card"><div class="list" id="foodList"></div></div>
+</section>
+</main>
+
+<nav class="nav">
+<button onclick="show('today')" data-page="today" class="active"><span>⌂</span>今日</button>
+<button onclick="show('weekly')" data-page="weekly"><span>◷</span>週檢查</button>
+<button onclick="show('doctor')" data-page="doctor"><span>✦</span>AI醫師</button>
+<button onclick="show('more')" data-page="more"><span>•••</span>更多</button>
+</nav>
+<div id="toast"></div>
+</div>
+<script>
+const KEY="dailyHealth7";
+let db=JSON.parse(localStorage.getItem(KEY)||'{"records":[],"asthma":[],"fooddb":[],"settings":{},"goal":{}}');
+function persist(){localStorage.setItem(KEY,JSON.stringify(db))}
+function $(id){return document.getElementById(id)}
+function esc(x){return String(x??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+function today(){return new Date().toISOString().slice(0,10)}
+function toast(x){$("toast").textContent=x;$("toast").style.display="block";setTimeout(()=>$("toast").style.display="none",1400)}
+function show(id){
+ document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));
+ $(id)?.classList.add("active");
+ document.querySelectorAll(".nav button").forEach(x=>x.classList.toggle("active",x.dataset.page===id));
+ render();
+}
+function setRecord(type){$("rtype").value=type;renderRecordForm()}
+function renderRecordForm(){
+ const t=$("rtype").value;
+ const forms={
+ food:`<label>餐點名稱<input id="rName" placeholder="例如：雞腿便當"></label><label style="display:block;margin-top:8px">熱量 kcal<input id="rKcal" type="number"></label>`,
+ water:`<label>喝水 ml<input id="rMl" type="number" value="300"></label>`,
+ weight:`<label>體重 kg<input id="rWeight" type="number" step=".1"></label><label style="display:block;margin-top:8px">體脂 %（選填）<input id="rFat" type="number" step=".1"></label>`,
+ sleep:`<label>睡眠小時<input id="rHours" type="number" step=".1"></label><label style="display:block;margin-top:8px">品質 1–5<input id="rQuality" type="number" min="1" max="5" value="3"></label><label style="display:block;margin-top:8px">夜醒次數<input id="rWake" type="number" min="0" value="0"></label>`,
+ bowel:`<label>次數<input id="rCount" type="number" min="1" value="1"></label><label style="display:block;margin-top:8px">形狀<select id="rBType"><option>正常</option><option>偏硬</option><option>偏軟</option><option>腹瀉</option></select></label>`,
+ vitals:`<label>SpO₂ %<input id="rSp" type="number" min="50" max="100"></label><label style="display:block;margin-top:8px">心率 bpm<input id="rHr" type="number" min="20" max="250"></label><label style="display:block;margin-top:8px">情境<select id="rCtx"><option>休息</option><option>活動後</option><option>不舒服時</option></select></label>`
+ };
+ $("recordForm").innerHTML=forms[t]
+}
+function saveRecord(){
+ const t=$("rtype").value, d={type:t,date:today(),ts:Date.now()};
+ if(t==="food"){d.name=$("rName").value.trim();d.kcal=+$("rKcal").value||0;if(!d.name||!d.kcal)return toast("請填名稱與熱量")}
+ if(t==="water"){d.ml=+$("rMl").value||0;if(!d.ml)return toast("請輸入毫升")}
+ if(t==="weight"){d.value=+$("rWeight").value||0;d.fat=+$("rFat").value||null;if(!d.value)return toast("請輸入體重")}
+ if(t==="sleep"){d.hours=+$("rHours").value||0;d.quality=+$("rQuality").value;d.wake=+$("rWake").value||0;if(!d.hours)return toast("請輸入睡眠")}
+ if(t==="bowel"){d.count=+$("rCount").value||1;d.btype=$("rBType").value}
+ if(t==="vitals"){d.spo2=+$("rSp").value||null;d.hr=+$("rHr").value||null;d.context=$("rCtx").value;if(!d.spo2&&!d.hr)return toast("至少輸入血氧或心率")}
+ db.records.push(d);persist();toast("已儲存");renderRecordForm();render()
+}
+function saveAsthma(){db.asthma.push({date:today(),ts:Date.now(),status:$("astStatus").value,wheeze:+$("astW").value,cough:+$("astC").value,chest:+$("astT").value,dyspnea:+$("astD").value,trigger:$("astTrigger").value});persist();toast("已儲存哮喘紀錄");render()}
+function saveGoal(){db.goal={start:+$("gStart").value||0,target:+$("gTarget").value||0,date:$("gDate").value||""};persist();toast("目標已儲存");render()}
+function saveFoodDB(){let name=$("fdName").value.trim(),k=+$("fdKcal").value||0;if(!name||!k)return toast("請填名稱與熱量");db.fooddb.push({name,k,cat:$("fdCat").value.trim()});persist();$("fdName").value="";$("fdKcal").value="";$("fdCat").value="";toast("已加入");render()}
+function latest(type){return db.records.filter(x=>x.type===type).sort((a,b)=>b.ts-a.ts)[0]}
+function targetKcal(){let s=db.settings,w=latest("weight")?.value;if(!w||!s.height||!s.age)return null;let b=s.sex==="male"?10*w+6.25*s.height-5*s.age+5:10*w+6.25*s.height-5*s.age-161;let t=b*+s.activity;return Math.round(s.goal==="loss"?Math.max(1200,t-500):s.goal==="gain"?t+300:t)}
+function render(){
+ $("date").textContent=new Date().toLocaleDateString("zh-TW",{year:"numeric",month:"long",day:"numeric"});
+ const td=today(),r=db.records.filter(x=>x.date===td),k=r.filter(x=>x.type==="food").reduce((a,x)=>a+(x.kcal||0),0),water=r.filter(x=>x.type==="water").reduce((a,x)=>a+(x.ml||0),0);
+ $("todayKcal").textContent=k;$("waterVal").textContent=water;$("target").textContent=targetKcal()??"—";$("kcalBar").style.width=Math.min(100,targetKcal()?k/targetKcal()*100:0)+"%";
+ $("wVal").textContent=latest("weight")?.value??"—";$("sleepVal").textContent=latest("sleep")?.hours??"—";
+ if($("gStart")){$("gStart").value=db.goal.start||"";$("gTarget").value=db.goal.target||"";$("gDate").value=db.goal.date||""}
+ if($("height")){Object.assign($("height"),{value:db.settings.height||""});$("age").value=db.settings.age||"";$("sex").value=db.settings.sex||"female";$("activity").value=db.settings.activity||"1.2";$("goalMode").value=db.settings.goal||"loss";$("proxy").value=localStorage.getItem("aiProxy")||""}
+ renderRecordList();renderGoal();renderFood();renderWeekly();renderRecordForm()
+}
+function renderRecordList(){$("recordList").innerHTML=db.records.slice().sort((a,b)=>b.ts-a.ts).slice(0,15).map(x=>`<div class="item"><b>${esc(x.type)}</b>　${x.value??x.kcal??x.ml??x.hours??x.spo2??""}${x.type==="food"?" kcal":x.type==="water"?" ml":x.type==="weight"?" kg":x.type==="sleep"?" 小時":x.type==="vitals"?"%":""}<div class="muted">${x.date}</div></div>`).join("")||'<div class="muted">尚無紀錄</div>'}
+function renderGoal(){if(!$("goalOut"))return;let g=db.goal,w=latest("weight")?.value;if(!g.start||!g.target||!w){$("goalOut").innerHTML='<div class="muted">設定起始與目標體重後，這裡會顯示進度。</div>';return}let total=g.start-g.target,done=g.start-w,p=total?Math.max(0,Math.min(100,done/total*100)):0;$("goalOut").innerHTML=`<div class="grid3"><div class="metric"><b>${w}</b><small>目前 kg</small></div><div class="metric"><b>${g.target}</b><small>目標 kg</small></div><div class="metric"><b>${Math.max(0,w-g.target).toFixed(1)}</b><small>剩餘 kg</small></div></div><p>${p.toFixed(0)}% 完成</p><div class="progress"><i style="width:${p}%"></i></div>`}
+function renderFood(){$("foodList").innerHTML=db.fooddb.slice().reverse().map(x=>`<div class="item"><b>${esc(x.name)}</b><span style="float:right">${x.k} kcal</span><div class="muted">${esc(x.cat)}</div></div>`).join("")||'<div class="muted">尚無自訂食物</div>'}
+function renderWeekly(){let since=Date.now()-7*864e5,r=db.records.filter(x=>x.ts>=since),days=new Set(r.map(x=>x.date)).size,ast=db.asthma.filter(x=>x.ts>=since).length;$("weeklyCard").innerHTML=`<div class="grid3"><div class="metric"><b>${days}/7</b><small>有紀錄天數</small></div><div class="metric"><b>${r.filter(x=>x.type==="food").length}</b><small>飲食</small></div><div class="metric"><b>${ast}</b><small>哮喘</small></div></div><p class="muted">此頁是紀錄完整度摘要，不是醫療診斷。</p>`;$("trend").innerHTML=r.length?`最近 7 天共有 ${r.length} 筆健康紀錄。`: "目前資料不足，先開始記錄吧。"}
+function saveSettings(){db.settings={height:+$("height").value||0,age:+$("age").value||0,sex:$("sex").value,activity:$("activity").value,goal:$("goalMode").value};persist();toast("熱量目標已更新");render()}
+function saveProxy(){localStorage.setItem("aiProxy",$("proxy").value.trim());toast("AI Proxy 已儲存")}
+async function askAI(){
+ const q=$("question").value.trim();if(!q)return toast("請先輸入問題");
+ let proxy=localStorage.getItem("aiProxy")||""; $("aiOut").innerHTML="<p>分析中…</p>";
+ if(!proxy){$("aiOut").innerHTML=`<b>本機摘要</b><p>${esc(q)}</p><p class="muted">目前尚未設定 AI Proxy。你仍可正常使用所有健康紀錄功能。</p>`;return}
+ try{let res=await fetch(proxy,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"health_chat",question:q,data:db})});let j=await res.json();$("aiOut").innerHTML=`<div style="white-space:pre-wrap;line-height:1.6">${esc(j.result||j.answer||JSON.stringify(j))}</div>`}
+ catch(e){$("aiOut").innerHTML=`<b>AI 連線失敗</b><p class="muted">${esc(e.message)}</p>`}
+}
+function clearAll(){if(confirm("確定清除日日健康的本機資料？")){localStorage.removeItem(KEY);location.reload()}}
+render();
+</script>
+</body></html>
